@@ -1,15 +1,16 @@
+import datetime
 import json
 import traceback
 import time
 import hashlib
 import requests
+from django.core import serializers
 
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from openpyxl.descriptors import Integer
-
+from django.db.models import Q
 from common.models import Asset
 # 增加对分页的支持
 from django.core.paginator import Paginator, EmptyPage
@@ -41,31 +42,46 @@ def listAsset(request):
 @require_http_methods(['GET'])
 def listByStatus(request):
     assetStatus = request.GET.get('status')
-    data = Asset.objects.get(status=assetStatus)
-    qs = model_to_dict(data)
-    result = [qs]
+    data = Asset.objects.all().filter(status=assetStatus)
+    assetList = []
+    for i in data.values():
+        assetList.append(i)
+
     # page = request.GET.get('page')
     # pagesize = request.GET.get('pagesize')
     # # 使用分页对象，设定每页多少条记录
-    # pgnt = Paginator(qs, pagesize)
+    # pgnt = Paginator(data, pagesize)
     # # 从数据库中读取数据，指定读取其中第几页
-    # currentPage = pgnt.page(page)
-    # assetList = list(currentPage)
-    # assetList = model_to_dict(qs)
-    return JsonResponse({'success': 'true', 'assetList': result}, safe=False)
+    # result = pgnt.page(page)
+    # # result = list(currentPage)
+    return JsonResponse({'success': 'true', 'assetList': assetList}, safe=False)
+
+
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 @require_http_methods(['GET'])
 def findByJobNumber(request):
     job = request.GET.get('jobNumber')
-    assetList = model_to_dict(Asset.objects.get(jobNumber=job))
+    data = Asset.objects.filter(Q(jobNumber=job) & Q(status="否"))
+    assetList = []
+    for i in data.values():
+        assetList.append(i)
     return JsonResponse({'ret': 0, 'assetList': assetList}, safe=False)
 
 
 @require_http_methods(['GET'])
 def findByAssetNumber(request):
-    asset = request.GET.get('assetNumber')
-    assetList = model_to_dict(Asset.objects.get(assetNumber=asset))
+    asset = request.GET.get('assetNumber').strip()
+    data = Asset.objects.filter(Q(assetNumber=asset) & Q(status="否"))
+    assetList = []
+    for i in data.values():
+        assetList.append(i)
     return JsonResponse({'ret': 0, 'assetList': assetList}, safe=False)
 
 
@@ -141,7 +157,7 @@ def bathDeleteAsset(request):
 def addToOa(request):
     assetIds = request.GET.get('ids')
     ids = list(assetIds.split(','))
-    assets = {'assetNumber', 'jobNumber'}
+    assets = []
     for assetId in ids:
         if id != '':
             data = Asset.objects.filter(id=assetId).values('jobNumber', 'assetNumber')
@@ -151,7 +167,8 @@ def addToOa(request):
                 assetNumber0 = i['assetNumber']
                 assetNumber = assetNumber0.strip()
                 listData = {assetNumber: jobNumber}
-                print(listData)
+                assets.append(listData)
+    print(assets)
 
     # appId = "qSymvYkZ4a2caQNVgKHG"
     # appSecret = "XchRcjaVQySxS8G2Vzf3CZamY7zxVWgJ"
@@ -171,14 +188,13 @@ def addToOa(request):
 
     # 新建字典
     param = {}
-    oaData = {"type": "it_manager", "info": listData}
+    oaData = {"type": "it_manager", "info": assets}
     param["data"] = oaData
     param["appId"] = appId
     param["nonce"] = str2
     param["timestamp"] = timestampToOa
     param["interfaceId"] = interfaceId
     param["token"] = tokenToOa
-    print(param)
     # 转换成json数据格式
     jsonParam = json.dumps(param)
     print(jsonParam)
