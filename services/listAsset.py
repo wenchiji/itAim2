@@ -1,5 +1,7 @@
 import datetime
 import json
+import random
+import string
 import traceback
 import time
 import hashlib
@@ -160,29 +162,30 @@ def bathDeleteAsset(request):
 def addToOa(request):
     assetIds = request.GET.get('ids')
     ids = list(assetIds.split(','))
-    assets = []
+    assets = {}
     for assetId in ids:
-        if id != '':
-            data = Asset.objects.filter(id=assetId).values('jobNumber', 'assetNumber')
-            for i in data.values():
-                jobNumber0 = i['jobNumber']
-                jobNumber = str(jobNumber0)
-                assetNumber0 = i['assetNumber']
-                assetNumber = assetNumber0.strip()
-                listData = {assetNumber: jobNumber}
-                assets.append(listData)
+        data = Asset.objects.filter(id=assetId).values('jobNumber', 'assetNumber')
+        for i in data.values():
+            jobNumber0 = i['jobNumber']
+            jobNumber = str(jobNumber0)
+            assetNumber0 = i['assetNumber']
+            assetNumber = assetNumber0.strip()
+            listData = {assetNumber: jobNumber}
+            assets[assetNumber] = jobNumber
+    print(listData)
     print(assets)
 
-    # appId = "qSymvYkZ4a2caQNVgKHG"
-    # appSecret = "XchRcjaVQySxS8G2Vzf3CZamY7zxVWgJ"
-    # interfaceId = "99f2ac375978e374557067455b855eab"
-    appId = "qHSYjTfnh3MhXqBmnaWk"
-    appSecret = "PWx4w9pa7UkPCZLAR6fXG9wJX2VHzgKQ"
-    interfaceId = "203868a71f188ed965682ac5a904b469"
+    appId = "qSymvYkZ4a2caQNVgKHG"
+    appSecret = "XchRcjaVQySxS8G2Vzf3CZamY7zxVWgJ"
+    interfaceId = "99f2ac375978e374557067455b855eab"
+    # appId = "qHSYjTfnh3MhXqBmnaWk"
+    # appSecret = "PWx4w9pa7UkPCZLAR6fXG9wJX2VHzgKQ"
+    # interfaceId = "203868a71f188ed965682ac5a904b469"
     timestamp = time.time()
     timestampToOa = int(round(timestamp * 10))
     timeStamp = str(round(timestamp * 10))
-    str2 = "xqg59ijt"
+    str2 = generate_random_str(8)
+    print(str2)
     string = appId + appSecret + interfaceId + str2 + timeStamp
     # 生成OA资产修改接口的token
     md5 = hashlib.md5()
@@ -201,17 +204,39 @@ def addToOa(request):
     # 转换成json数据格式
     jsonParam = json.dumps(param)
     print(jsonParam)
-    oaUrl = "https://testqxflowprocess.37wan.com/api.php/taker/rouseInterface"
+    # oaUrl = "https://testqxflowprocess.37wan.com/api.php/taker/rouseInterface"
+    oaUrl = "http://eicommon.37wan.com/api.php/taker/rouseInterface"
     re = requests.post(oaUrl, jsonParam)
 
-    result = json.loads(re.text)
+    # 将接口返回值转成json
+    resultData = json.loads(re.text)
+    print(resultData)
 
-    return JsonResponse({
-        'code': 0,
-        'success': 'false',
-        'data': result,
-        'msg': 'msg'
-    })
+    return JsonResponse({'result': resultData})
+
+
+# 生成随机字符串
+def generate_random_str(randomlength=16):
+    """
+    生成一个指定长度的随机字符串
+    """
+    random_str = ''
+    base_str = 'abcdefghigklmnopqrstuvwxyz0123456789'
+    length = len(base_str) - 1
+    for i in range(randomlength):
+        random_str += base_str[random.randint(0, length)]
+    return random_str
+
+
+# 入库成功后修改数据状态
+def updateStatus(request):
+    assetIds = request.POST.get('ids')
+    ids = list(assetIds.split(','))
+    for assetId in ids:
+        asset = Asset.objects.get(id=assetId)
+        asset.status = '是'
+        asset.save()
+    return JsonResponse({'success': 'true'})
 
 
 ActionHandler = {
@@ -223,7 +248,8 @@ ActionHandler = {
     'bathDeleteAsset': bathDeleteAsset,
     'findByJobNumber': findByJobNumber,
     'findByAssetNumber': findByAssetNumber,
-    'addToOa': addToOa
+    'addToOa': addToOa,
+    'updateStatus': updateStatus
 }
 
 

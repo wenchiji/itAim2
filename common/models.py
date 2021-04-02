@@ -6,9 +6,12 @@ from django.db import models
 
 class User(models.Model):
     id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, db_column='name')
     phone = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = "t_user"
 
 
 class Asset(models.Model):

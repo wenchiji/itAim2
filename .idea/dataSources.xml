@@ -10,5 +10,11 @@
         <property name="serverTimezone" value="Asia/Shanghai" />
       </driver-properties>
     </data-source>
+    <data-source source="LOCAL" name="itaim@60.167.124.119" uuid="c5774e9c-1ce6-4344-ae00-811c42921e9c">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://60.167.124.119:3306/itaim</jdbc-url>
+    </data-source>
   </component>
 </project>

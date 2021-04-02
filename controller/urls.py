@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^addAsset/$', listAsset.addAsset),
     url(r'^bathDeleteAsset/$', listAsset.bathDeleteAsset),
     url(r'^addToOa/$', listAsset.addToOa),
+    url(r'^updateAssetStatus/$', listAsset.updateStatus),
 
     # 用户管理
     url(r'^listUser/$', user.listUser),

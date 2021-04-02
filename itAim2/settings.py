@@ -84,8 +84,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'itaim',
-        'USER': 'root',
-        'PASSWORD': '123456'
+        'USER': 'itaim',
+        'PASSWORD': 'CHen12!#03',
+        'HOST': '60.167.124.119',
+        'port': 3306
     }
 }
 
