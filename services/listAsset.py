@@ -43,18 +43,21 @@ def listAsset(request):
 def listByStatus(request):
     assetStatus = request.GET.get('status')
     data = Asset.objects.all().filter(status=assetStatus)
-    assetList = []
+    dataList = []
     for i in data.values():
-        assetList.append(i)
+        dataList.append(i)
 
-    # page = request.GET.get('page')
-    # pagesize = request.GET.get('pagesize')
-    # # 使用分页对象，设定每页多少条记录
-    # pgnt = Paginator(data, pagesize)
-    # # 从数据库中读取数据，指定读取其中第几页
-    # result = pgnt.page(page)
-    # # result = list(currentPage)
-    return JsonResponse({'success': 'true', 'assetList': assetList}, safe=False)
+    page = request.GET.get('page')
+    pagesize = request.GET.get('pagesize')
+    # 使用分页对象，设定每页多少条记录
+    pgnt = Paginator(dataList, pagesize)
+    # 从数据库中读取数据，指定读取其中第几页
+    currentData = pgnt.page(page)
+    assetList = list(currentData)
+    # result = list(currentPage)
+    return JsonResponse({'success': 'true', 'assetList': assetList,
+                         'size': pagesize, 'totalElements': pgnt.count,
+                         'totalPages': pgnt.num_pages}, safe=False)
 
 
 class DateEncoder(json.JSONEncoder):
@@ -72,7 +75,7 @@ def findByJobNumber(request):
     assetList = []
     for i in data.values():
         assetList.append(i)
-    return JsonResponse({'ret': 0, 'assetList': assetList}, safe=False)
+    return JsonResponse({'assetList': assetList}, safe=False)
 
 
 @require_http_methods(['GET'])
@@ -82,7 +85,7 @@ def findByAssetNumber(request):
     assetList = []
     for i in data.values():
         assetList.append(i)
-    return JsonResponse({'ret': 0, 'assetList': assetList}, safe=False)
+    return JsonResponse({'assetList': assetList}, safe=False)
 
 
 @require_http_methods(['POST'])

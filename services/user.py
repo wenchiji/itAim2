@@ -1,13 +1,8 @@
-import json
-import traceback
-
-from django.core import serializers
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.template.defaultfilters import safe
 from django.views.decorators.http import require_http_methods
 
-from common import models
 from common.models import User
 # 增加对分页的支持
 from django.core.paginator import Paginator, EmptyPage
@@ -16,47 +11,29 @@ from controller.handler import dispatcherBase
 
 @require_http_methods(['GET'])
 def listUser(request):
-    try:
-        # 返回一个 QuerySet 对象 ，包含所有的表记录
-        qs = User.objects.values()
+    # 返回一个 QuerySet 对象 ，包含所有的表记录
+    qs = User.objects.values()
 
-        page = request.GET.get('page')
-        pagesize = request.GET.get('pagesize')
-        # 使用分页对象，设定每页多少条记录
-        pgnt = Paginator(qs, pagesize)
-        # 从数据库中读取数据，指定读取其中第几页
-        currentPage = pgnt.page(page)
-        # 将 QuerySet 对象 转化为 list 类型
-        # 否则不能 被 转化为 JSON 字符串
-        userList = list(currentPage)
-
-        return JsonResponse({'ret': 0, 'userList': userList, 'total': pgnt.count})
-
-    except EmptyPage:
-        return JsonResponse({'ret': 0, 'userList': [], 'total': 0})
-
-    except:
-        return JsonResponse({'ret': 2, 'msg': f'未知错误\n{traceback.format_exc()}'})
+    page = request.GET.get('page')
+    pagesize = request.GET.get('pagesize')
+    # 使用分页对象，设定每页多少条记录
+    pgnt = Paginator(qs, pagesize)
+    # 从数据库中读取数据，指定读取其中第几页
+    currentPage = pgnt.page(page)
+    # 将 QuerySet 对象 转化为 list 类型
+    # 否则不能 被 转化为 JSON 字符串
+    userList = list(currentPage)
+    return JsonResponse({'success': 'true', 'userList': userList,
+                         'size': pagesize, 'totalElements': pgnt.count,
+                         'totalPages': pgnt.num_pages})
 
 
 @require_http_methods(['GET'])
 def findByName(request):
-    # try:
     name = request.GET.get('username')
-    # qs = User.objects.filter(username=name).values_list()
-    # qs = User.objects.filter(username__contains=name).all()
-    # userList = serializers.serialize("json", qs)
-    # # userList = list(qs)
-    # return JsonResponse({'userList': userList})
-    userList = model_to_dict(User.objects.get(username__contains=name))
-    return JsonResponse({'ret': 0, 'userList': userList}, safe=False)
-
-
-# except EmptyPage:
-#     return JsonResponse({'ret': 0, 'userList': [], 'total': 0})
-#
-# except:
-#     return JsonResponse({'ret': 2, 'msg': f'未知错误\n{traceback.format_exc()}'})
+    users = model_to_dict(User.objects.get(username__contains=name))
+    userList = [users]
+    return JsonResponse({'userList': userList}, safe=False)
 
 
 @require_http_methods(['POST'])

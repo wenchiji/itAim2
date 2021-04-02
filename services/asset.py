@@ -3,6 +3,7 @@ import traceback
 from datetime import timezone
 
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from common.models import Asset
@@ -21,11 +22,12 @@ def listAsset(request):
     pgnt = Paginator(data, pagesize)
     # 从数据库中读取数据，指定读取其中第几页
     currentData = pgnt.page(page)
-
     # 将 QuerySet 对象 转化为 list 类型
     # 否则不能 被 转化为 JSON 字符串
     assetList = list(currentData)
-    return JsonResponse({'success': 'true', 'assetList': assetList, 'total': pgnt.count})
+    return JsonResponse({'assetList': assetList, 'size': pagesize,
+                         'totalElements': pgnt.count,
+                         'totalPages': pgnt.num_pages}, safe=False)
 
 
 @require_http_methods(['GET'])
