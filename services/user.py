@@ -9,7 +9,6 @@ from django.core.paginator import Paginator, EmptyPage
 from controller.handler import dispatcherBase
 
 
-@require_http_methods(['GET'])
 def listUser(request):
     # 返回一个 QuerySet 对象 ，包含所有的表记录
     qs = User.objects.values()
@@ -28,28 +27,36 @@ def listUser(request):
                          'totalPages': pgnt.num_pages})
 
 
-@require_http_methods(['GET'])
 def findByName(request):
     name = request.GET.get('username')
-    users = model_to_dict(User.objects.get(username__contains=name))
-    userList = [users]
+    if name:
+        user = User.objects.get(username__contains=name)
+        users = model_to_dict(user)
+        userList = [users]
+    else:
+        users = User.objects.values()
+        userList = list(users)
     return JsonResponse({'userList': userList}, safe=False)
 
 
-@require_http_methods(['POST'])
 def addUser(request):
-    user = User(username=request.POST.get('username'),
-                phone=request.POST.get('phone'),
-                password=request.POST.get('password'))
-    user.save()
+    aa = User.objects.filter(username=request.POST.get('username'))
+    if aa.exists():
+        return JsonResponse({
+            'success': 'false',
+            'msg': '用户已存在！'
+        })
+    else:
+        user = User(username=request.POST.get('username'),
+                    phone=request.POST.get('phone'),
+                    password=request.POST.get('password'))
+        user.save()
+        return JsonResponse({
+            'success': 'true',
+            'msg': '用户添加成功！'
+        })
 
-    return JsonResponse({
-        'success': 'true',
-        'msg': '用户添加成功！'
-    })
 
-
-@require_http_methods(['POST'])
 def editUser(request):
     userId = request.POST.get('id')
     user = User.objects.get(id=userId)
@@ -69,7 +76,6 @@ def editUser(request):
         })
 
 
-@require_http_methods(['POST'])
 def deleteUser(request):
     userId = request.POST.get('id')
     try:
@@ -88,7 +94,6 @@ def deleteUser(request):
     })
 
 
-@require_http_methods(['POST'])
 def bathDeleteUser(request):
     userIds = request.POST.get('ids')
     ids = list(userIds.split(','))
@@ -101,17 +106,3 @@ def bathDeleteUser(request):
         'success': 'true',
         'msg': '删除用户成功！'
     })
-
-
-ActionHandler = {
-    'listUser': listUser,
-    'findByName': findByName,
-    'addUser': addUser,
-    'editUser': editUser,
-    'deleteUser': deleteUser,
-    'bathDeleteUser': bathDeleteUser
-}
-
-
-def dispatcher(request):
-    return dispatcherBase(request)

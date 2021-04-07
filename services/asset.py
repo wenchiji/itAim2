@@ -1,18 +1,12 @@
-import json
-import traceback
 from datetime import timezone
 
 from django.http import JsonResponse
-from django.shortcuts import render
-from django.views.decorators.http import require_http_methods
 
 from common.models import Asset
-# 增加对分页的支持
-from django.core.paginator import Paginator, EmptyPage
+from django.core.paginator import Paginator
 from controller.handler import dispatcherBase
 
 
-@require_http_methods(['GET'])
 def listAsset(request):
     # 返回一个 QuerySet 对象 ，包含所有的表记录
     data = Asset.objects.values()
@@ -30,7 +24,6 @@ def listAsset(request):
                          'totalPages': pgnt.num_pages}, safe=False)
 
 
-@require_http_methods(['GET'])
 def findByJobNumber(request):
     job = request.GET.get('jobNumber')
     data = Asset.objects.filter(jobNumber=job)
@@ -40,7 +33,6 @@ def findByJobNumber(request):
     return JsonResponse({'success': 0, 'assetList': assetList}, safe=False)
 
 
-@require_http_methods(['GET'])
 def findByAssetNumber(request):
     asset = request.GET.get('assetNumber')
     data = Asset.objects.filter(assetNumber__contains=asset)
@@ -50,7 +42,6 @@ def findByAssetNumber(request):
     return JsonResponse({'ret': 0, 'assetList': assetList}, safe=False)
 
 
-@require_http_methods(['POST'])
 def updateAsset(request):
     assetId = request.POST.get('id')
     asset = Asset.objects.get(id=assetId)
@@ -72,7 +63,6 @@ def updateAsset(request):
         })
 
 
-@require_http_methods(['POST'])
 def deleteAsset(request):
     assetId = request.POST.get('id')
     try:
@@ -89,7 +79,6 @@ def deleteAsset(request):
     })
 
 
-@require_http_methods(['POST'])
 def bathDeleteAsset(request):
     assetIds = request.POST.get('ids')
     ids = list(assetIds.split(','))
@@ -103,15 +92,15 @@ def bathDeleteAsset(request):
         'msg': '资产信息删除成功！'
     })
 
-
-ActionHandler = {
-    'listAsset': listAsset,
-    'findByJobNumber': findByJobNumber,
-    'findByAssetNumber': findByAssetNumber,
-    'updateAsset': updateAsset,
-    'deleteAsset': deleteAsset,
-    'bathDeleteAsset': bathDeleteAsset,
-}
+#
+# ActionHandler = {
+#     'listAsset': listAsset,
+#     'findByJobNumber': findByJobNumber,
+#     'findByAssetNumber': findByAssetNumber,
+#     'updateAsset': updateAsset,
+#     'deleteAsset': deleteAsset,
+#     'bathDeleteAsset': bathDeleteAsset,
+# }
 
 
 def dispatcher(request):
